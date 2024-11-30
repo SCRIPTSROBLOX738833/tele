@@ -1,0 +1,43 @@
+import telebot
+
+# التوكن الخاص بالبوت
+TOKEN = "7939391363:AAHKUfinnRpDTDw84p4XkKGNWTyFRTTQQdo"
+bot = telebot.TeleBot(TOKEN)
+
+# استقبال حدث انضمام عضو جديد للمجموعة
+@bot.message_handler(content_types=['new_chat_members'])
+def welcome_new_member(message):
+    for new_member in message.new_chat_members:
+        try:
+            # اسم الشخص
+            first_name = new_member.first_name or "غير معروف"
+            last_name = new_member.last_name or ""
+            full_name = f"{first_name} {last_name}".strip()
+
+            # ID الشخص
+            user_id = new_member.id
+
+            # الوصف الشخصي - تليجرام لا يوفر الوصف عبر الـ API
+            bio = "لا يوجد وصف."
+
+            # رسالة الترحيب مع البيانات
+            msg = f"👋 **أهلاً بيك في المجموعة!**\n\n"
+            msg += f"📛 الاسم: {full_name}\n"
+            msg += f"🆔 الايدي: `{user_id}`\n"
+            msg += f"✍️ الوصف: {bio}\n"
+
+            # محاولة إرسال صورة البروفايل
+            user_profile_photos = bot.get_user_profile_photos(new_member.id)
+            if user_profile_photos.total_count > 0:
+                # جلب أول صورة وإرسالها
+                file_id = user_profile_photos.photos[0][0].file_id
+                bot.send_photo(message.chat.id, file_id, caption=msg, parse_mode="Markdown")
+            else:
+                # لو مفيش صورة، إرسال البيانات فقط
+                bot.send_message(message.chat.id, msg, parse_mode="Markdown")
+        except Exception as e:
+            bot.send_message(message.chat.id, f"❌ حصل خطأ أثناء جلب البيانات: {e}")
+
+# تشغيل البوت
+print("البوت شغال...")
+bot.polling()
